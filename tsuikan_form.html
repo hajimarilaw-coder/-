@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>追完事項 質問フォーム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --navy: #1a2744;
+    --navy-mid: #2c3e6b;
+    --navy-light: #3d5291;
+    --gold: #b8952a;
+    --gold-light: #d4af4a;
+    --cream: #f8f5ef;
+    --cream-dark: #ede9e0;
+    --text: #1e1e1e;
+    --text-muted: #5a5a5a;
+    --border: #c8bfa8;
+    --border-light: #e0d9cc;
+    --white: #ffffff;
+    --red: #b03030;
+    --section-bg: #f2eee6;
+    --green: #2e7d32;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  .site-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 28px 40px;
+    border-bottom: 3px solid var(--gold);
+  }
+  .site-header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+  }
+  .site-header p { font-size: 12px; color: #aab3cc; margin-top: 6px; letter-spacing: 0.05em; }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .intro-box {
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--gold);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 36px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .intro-box strong { color: var(--navy); }
+
+  .section {
+    margin-bottom: 36px;
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-num {
+    background: var(--gold);
+    color: var(--navy);
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 600;
+    font-size: 13px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-title { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 500; letter-spacing: 0.06em; }
+  .section-body { padding: 24px 22px; }
+  .section-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--section-bg);
+    border-left: 3px solid var(--gold);
+    padding: 8px 12px;
+    margin-bottom: 18px;
+    border-radius: 0 3px 3px 0;
+    line-height: 1.7;
+  }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 9px 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--white);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  select { cursor: pointer; }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--navy-light);
+    box-shadow: 0 0 0 3px rgba(61,82,145,0.12);
+  }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.7; }
+  .input-error { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(176,48,48,0.10) !important; }
+
+  .error-msg { color: var(--red); font-size: 12px; margin-top: 6px; display: none; }
+  .error-msg.visible { display: block; }
+
+  /* Question block */
+  .q-block {
+    border: 1px solid var(--border-light);
+    border-radius: 5px;
+    padding: 18px 18px 14px;
+    margin-bottom: 16px;
+    background: var(--section-bg);
+    transition: border-color 0.2s;
+  }
+  .q-block.has-error { border-color: var(--red); }
+  .q-block-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .q-num-badge {
+    background: var(--navy);
+    color: var(--gold-light);
+    font-family: 'Noto Serif JP', serif;
+    font-size: 12px;
+    font-weight: 600;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .q-text { flex: 1; font-size: 14px; font-weight: 500; color: var(--navy); line-height: 1.6; }
+  .q-req-badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 500; white-space: nowrap; flex-shrink: 0;
+  }
+  .q-req-badge.required { background: #fde8e8; color: var(--red); border: 1px solid #f5b8b8; }
+  .q-req-badge.optional { background: var(--cream-dark); color: var(--text-muted); border: 1px solid var(--border-light); }
+
+  /* Answer type tabs */
+  .ans-type-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .ans-tab {
+    font-size: 12px; padding: 5px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--white);
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .ans-tab.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+  .ans-panel { display: none; }
+  .ans-panel.active { display: block; }
+
+  /* File doc type selector */
+  .doc-type-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .doc-type-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--navy);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .doc-type-select {
+    flex: 1;
+    min-width: 200px;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .doc-type-select:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(61,82,145,0.12); }
+  .doc-type-other-input {
+    display: none;
+    flex: 1;
+    min-width: 160px;
+  }
+  .doc-type-other-input.visible { display: block; }
+
+  /* File drop area */
+  .file-drop-area {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 20px 16px;
+    text-align: center;
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .file-drop-area:hover, .file-drop-area.dragover {
+    border-color: var(--navy-light);
+    background: #f0f3fa;
+  }
+  .file-drop-area input[type="file"] {
+    position: absolute; inset: 0; opacity: 0;
+    cursor: pointer; width: 100%; height: 100%;
+  }
+  .file-drop-icon { font-size: 26px; margin-bottom: 6px; }
+  .file-drop-label { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+  .file-drop-label strong { color: var(--navy-light); text-decoration: underline; }
+  .file-drop-hint { font-size: 11px; color: #999; margin-top: 4px; }
+
+  .file-preview-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .file-preview-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--white);
+    border: 1px solid var(--border-light);
+    border-radius: 4px; padding: 8px 12px;
+  }
+  .file-type-icon { font-size: 20px; flex-shrink: 0; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name { font-size: 13px; font-weight: 500; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .file-doc-type-tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    background: #e8f0fe; color: var(--navy-light);
+    border: 1px solid #c5d4f5; white-space: nowrap; flex-shrink: 0;
+  }
+  .file-remove-btn {
+    background: none; border: 1px solid #e0b8b8; border-radius: 4px;
+    color: #c0392b; font-size: 12px; padding: 3px 8px;
+    cursor: pointer; flex-shrink: 0; transition: background 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .file-remove-btn:hover { background: #fde8e8; }
+
+  /* Submit */
+  .submit-area { text-align: center; padding: 40px 0 20px; }
+  .submit-btn {
+    background: var(--navy); color: var(--white); border: none;
+    border-radius: 5px; padding: 16px 60px;
+    font-family: 'Noto Serif JP', serif; font-size: 15px;
+    letter-spacing: 0.1em; cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    border-bottom: 3px solid var(--gold);
+  }
+  .submit-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .submit-note { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+
+  .validation-alert {
+    display: none;
+    background: #fde8e8; border: 1px solid #f5b8b8;
+    border-left: 4px solid var(--red); border-radius: 4px;
+    padding: 14px 18px; margin-bottom: 24px;
+    font-size: 13px; color: var(--red); line-height: 1.7;
+  }
+  .validation-alert.visible { display: block; }
+
+  /* Success overlay */
+  #success-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,39,68,0.92); z-index: 999;
+    align-items: center; justify-content: center;
+  }
+  #success-overlay.active { display: flex; }
+  .success-box {
+    background: var(--white); border-radius: 8px;
+    padding: 32px 24px 28px; max-width: 520px; width: 92%;
+    text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .success-icon {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--navy); border: 3px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 26px;
+  }
+  .success-box h2 { font-family: 'Noto Serif JP', serif; font-size: 18px; color: var(--navy); margin-bottom: 12px; }
+  .success-box p { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+
+  .progress-wrap { margin-top: 16px; }
+  .progress-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  .progress-bar-outer { height: 6px; background: var(--cream-dark); border-radius: 3px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; background: var(--gold-light); border-radius: 3px; transition: width 0.3s ease; width: 0%; }
+
+  /* Setup */
+  #setup-screen {
+    background: linear-gradient(135deg, #1a2744 0%, #2c3e6b 100%);
+    min-height: 100vh; display: flex; align-items: flex-start;
+    justify-content: center; padding: 48px 16px 80px;
+  }
+  .setup-wrap {
+    background: var(--white); border-radius: 10px; max-width: 760px;
+    width: 100%; padding: 44px 48px 40px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3); border-top: 4px solid var(--gold);
+  }
+  .setup-badge {
+    display: inline-block; background: var(--navy); color: var(--gold-light);
+    font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 16px; border: 1px solid var(--gold);
+  }
+  .setup-title { font-family: "Noto Serif JP", serif; font-size: 22px; font-weight: 500; color: var(--navy); margin-bottom: 10px; letter-spacing: 0.06em; }
+  .setup-desc { font-size: 13px; color: var(--text-muted); line-height: 1.8; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border-light); }
+  .setup-label { display: block; font-size: 13px; font-weight: 500; color: var(--navy); margin-bottom: 6px; }
+  .setup-field { margin-bottom: 20px; }
+  .setup-field input[type="text"] {
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 9px 12px; font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px; width: 100%; outline: none;
+  }
+  .setup-field input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(61,82,145,0.12); }
+
+  .gas-box {
+    background: #fffbe6; border: 1px solid #ffe082;
+    border-left: 4px solid var(--gold); border-radius: 4px;
+    padding: 14px 16px; margin-bottom: 24px;
+    font-size: 13px; color: var(--text-muted); line-height: 1.8;
+  }
+  .gas-box strong { color: var(--navy); }
+  .gas-box input[type="text"] {
+    width: 100%; border: 1px solid var(--border); border-radius: 4px;
+    padding: 7px 10px; font-family: monospace; font-size: 12px;
+    margin-top: 8px; outline: none;
+  }
+
+  .setup-questions-label { font-size: 13px; font-weight: 500; color: var(--navy); margin-bottom: 10px; padding: 8px 0 6px; border-bottom: 2px solid var(--navy); letter-spacing: 0.04em; }
+
+  .setup-q-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+  .setup-q-num {
+    background: var(--navy); color: var(--gold-light);
+    font-size: 12px; font-weight: 600; width: 24px; height: 24px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 9px;
+  }
+  .setup-q-inputs { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .setup-q-inputs input[type="text"] {
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 7px 10px; font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px; outline: none;
+  }
+  .setup-q-inputs input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(61,82,145,0.12); }
+  .setup-q-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .type-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--white);
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .type-badge.t-text  { background: var(--navy-mid); color: var(--white); border-color: var(--navy-mid); }
+  .type-badge.t-file  { background: var(--green); color: var(--white); border-color: var(--green); }
+  .type-badge.t-both  { background: #e65c00; color: var(--white); border-color: #e65c00; }
+  .req-toggle {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    font-weight: 500; cursor: pointer; transition: background 0.15s;
+    font-family: 'Noto Sans JP', sans-serif; white-space: nowrap;
+  }
+  .req-toggle.required { background: #fde8e8; color: var(--red); border: 1px solid #f5b8b8; }
+  .req-toggle.optional { background: var(--cream-dark); color: var(--text-muted); border: 1px solid var(--border-light); }
+  .del-q-btn {
+    background: none; border: 1px solid #e0b8b8; border-radius: 4px;
+    color: #c0392b; font-size: 12px; padding: 5px 10px;
+    cursor: pointer; flex-shrink: 0; margin-top: 6px;
+    transition: background 0.15s; font-family: 'Noto Sans JP', sans-serif;
+  }
+  .del-q-btn:hover { background: #fde8e8; }
+
+  .setup-add-btn {
+    background: none; border: 1px dashed var(--navy-light);
+    color: var(--navy-light); border-radius: 4px;
+    padding: 7px 16px; font-family: "Noto Sans JP", sans-serif;
+    font-size: 13px; cursor: pointer; margin-bottom: 28px;
+    display: block; transition: background 0.2s;
+  }
+  .setup-add-btn:hover { background: #f0f3fa; }
+  .setup-actions { text-align: center; margin-bottom: 16px; }
+  .setup-go-btn {
+    background: var(--navy); color: var(--white); border: none;
+    border-radius: 6px; padding: 16px 44px;
+    font-family: "Noto Serif JP", serif; font-size: 15px;
+    letter-spacing: 0.08em; cursor: pointer;
+    border-bottom: 3px solid var(--gold);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .setup-go-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+
+  .url-panel-inner { background: #f0f5ff; border: 2px solid var(--navy-light); border-radius: 8px; padding: 24px; margin-top: 8px; }
+  .url-panel-title { font-family: "Noto Serif JP", serif; font-size: 16px; font-weight: 500; color: var(--navy); margin-bottom: 8px; }
+  .url-box-wrap { display: flex; gap: 8px; align-items: center; }
+  .url-box {
+    flex: 1; border: 1px solid var(--border); border-radius: 4px;
+    padding: 10px 12px; font-size: 11px; color: #999;
+    background: #f5f5f5; font-family: monospace;
+    outline: none; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; user-select: none; pointer-events: none;
+  }
+  .url-copy-btn {
+    background: #e65c00; color: var(--white); border: none;
+    border-radius: 6px; padding: 12px 28px;
+    font-family: "Noto Sans JP", sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; transition: background 0.2s;
+    flex-shrink: 0; box-shadow: 0 2px 8px rgba(230,92,0,0.3);
+  }
+  .url-copy-btn:hover { background: #cc4f00; }
+  .copy-success-url { color: var(--green); font-size: 13px; font-weight: 500; margin-top: 8px; display: none; }
+  .url-panel-note { font-size: 12px; color: var(--text-muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); }
+
+  #main-form-area { display: none; }
+  #main-form-area.active { display: block; }
+
+  @media (max-width: 600px) {
+    .container { padding: 24px 14px 60px; }
+    .site-header { padding: 20px 16px; }
+    .setup-wrap { padding: 28px 16px 28px; }
+    .doc-type-row { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 弁護士セットアップ画面 ===== -->
+<div id="setup-screen">
+  <div class="setup-wrap">
+    <div class="setup-badge">弁護士記入欄</div>
+    <h2 class="setup-title">追完フォーム　送付前の準備</h2>
+    <p class="setup-desc">
+      依頼者に送付する前に、依頼者氏名・質問内容・回答タイプを設定してください。<br>
+      各質問に「テキスト回答」「ファイル添付」「テキスト＋ファイル」の3タイプから選択できます。<br>
+      ファイル添付では、送信者が書類の種別を選択して提出できます。
+    </p>
+
+    <input type="hidden" id="setup-gas-url" value="https://script.google.com/macros/s/AKfycbxaRfu2H5zMPCoiY5cGsy5LZOON2JMrU27DY67W7_SX4IH2xt3rBxjwjMKs2bJ6MuOR/exec">
+
+    <div class="setup-field">
+      <label class="setup-label">依頼者氏名</label>
+      <input type="text" id="setup-client-name" placeholder="例：山田 太郎">
+    </div>
+    <div class="setup-field">
+      <label class="setup-label">フォームの件名（任意）</label>
+      <input type="text" id="setup-subject" placeholder="例：○○について追完のお願い（空白の場合は「追完事項のご確認」と表示）">
+    </div>
+
+    <div class="setup-questions-label">
+      質問一覧　<span style="font-size:11px;color:var(--text-muted);font-weight:400;">回答タイプを質問ごとに選択してください</span>
+    </div>
+    <div id="setup-q-list"></div>
+    <button type="button" class="setup-add-btn" onclick="setupAddQ()">＋ 質問を追加</button>
+
+    <div class="setup-actions">
+      <button type="button" class="setup-go-btn" onclick="setupApply()">依頼者用URLを生成する　→</button>
+    </div>
+
+    <div id="setup-url-panel" style="display:none;">
+      <div class="url-panel-inner">
+        <div class="url-panel-title">✅ 準備完了　依頼者にこのURLを送ってください</div>
+        <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:6px;padding:10px 14px;margin-bottom:12px;color:#e65c00;font-weight:600;font-size:13px;">
+          ⚠️ 必ず「コピー」ボタンを押してURLをコピーしてください。
+          <span style="font-weight:400;color:#555;">URLを直接クリック・選択してコピーすると途中で切れてエラーになります。</span>
+        </div>
+        <div class="url-box-wrap">
+          <input type="text" id="generated-url" class="url-box" readonly tabindex="-1">
+          <button type="button" class="url-copy-btn" onclick="copyUrl()">📋 コピー</button>
+        </div>
+        <div id="copy-success-url" class="copy-success-url">✓ コピーしました　LINEまたはメールに貼り付けてください</div>
+        <div class="url-panel-note">※ このURLを開いた依頼者には弁護士記入欄は表示されません。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 依頼者回答フォーム ===== -->
+<div id="main-form-area">
+  <header class="site-header">
+    <h1 id="form-main-title">追完事項　質問フォーム</h1>
+    <p>ご回答の上、送信ボタンを押してください</p>
+  </header>
+
+  <div class="container">
+    <div class="intro-box">
+      お手数ですが、担当弁護士より追加でご確認させていただきたい事項がございます。<br>
+      各質問にご回答ください。書類の提出を求められている場合は、書類の種別を選択してからファイルを添付してください。<br>
+      <strong>※</strong> 印の質問は必ずご回答ください。
+    </div>
+
+    <div class="validation-alert" id="validation-alert">
+      <strong>未回答・未添付の必須項目があります。</strong><br>
+      赤くなっている質問にご回答またはファイルを添付のうえ、もう一度「送信」ボタンを押してください。
+    </div>
+
+    <div class="section" style="border-top: 3px solid var(--gold);">
+      <div class="section-header" style="background:var(--gold);color:var(--navy);">
+        <div class="section-num" style="background:var(--navy);color:var(--gold-light);">★</div>
+        <div class="section-title" id="form-section-title">追完事項のご確認</div>
+      </div>
+      <div class="section-body">
+        <div class="section-note" id="form-section-note">
+          各質問にご回答ください。<span style="color:var(--red);font-weight:500;">必須</span>の質問は必ずご入力・ファイル添付してください。
+        </div>
+        <div id="qa-list"></div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <button type="button" class="submit-btn" id="submit-btn" onclick="submitForm()">回答を送信する</button>
+      <p class="submit-note">必須項目が未入力・未添付の場合は送信できません。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Success Overlay -->
+<div id="success-overlay">
+  <div class="success-box">
+    <div id="state-sending">
+      <div class="success-icon" style="background:var(--navy-mid);">⏳</div>
+      <h2>送信中…</h2>
+      <p id="sending-detail">データを送信しています。しばらくお待ちください。</p>
+      <div class="progress-wrap">
+        <div class="progress-label" id="progress-label">準備中...</div>
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+    <div id="state-done" style="display:none;">
+      <div class="success-icon">✓</div>
+      <h2>送信が完了しました</h2>
+      <p>ご回答いただきありがとうございます。<br>担当弁護士にデータが届きました。<br>このページは閉じていただいて構いません。</p>
+    </div>
+    <div id="state-error" style="display:none;">
+      <div class="success-icon" style="background:#b03030;">!</div>
+      <h2>送信できませんでした</h2>
+      <p id="error-detail">通信エラーが発生しました。もう一度お試しください。</p>
+      <button style="background:var(--navy);color:#fff;border:none;border-radius:4px;padding:12px 32px;font-size:14px;cursor:pointer;width:100%;margin-top:16px;font-family:'Noto Sans JP',sans-serif;" onclick="closeError()">戻って修正する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 書類種別の選択肢 ==========
+const DOC_TYPES = [
+  '書類の種別を選択してください',
+  '銀行取引履歴',
+  '保険証券・保険関係書類',
+  '退職金関係書類',
+  '賃貸借契約書',
+  '車検証',
+  'その他（自由入力）'
+];
+
+// ========== ユーティリティ ==========
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+function getFileIcon(name) {
+  const ext = (name.split('.').pop()||'').toLowerCase();
+  if (['jpg','jpeg','png','gif','webp','heic','heif','bmp'].includes(ext)) return '🖼️';
+  if (ext === 'pdf') return '📄';
+  if (['doc','docx'].includes(ext)) return '📝';
+  if (['xls','xlsx'].includes(ext)) return '📊';
+  return '📎';
+}
+
+// ========== セットアップ ==========
+let setupQs = [{ text:'', required:true, ansType:'text' }];
+
+function renderSetupList() {
+  const list = document.getElementById('setup-q-list');
+  list.innerHTML = '';
+  setupQs.forEach((q, i) => {
+    const row = document.createElement('div');
+    row.className = 'setup-q-row';
+    const typeInfo = {
+      text: { label:'テキスト回答', cls:'t-text' },
+      file: { label:'ファイル添付', cls:'t-file' },
+      both: { label:'テキスト＋ファイル', cls:'t-both' }
+    };
+    row.innerHTML =
+      '<span class="setup-q-num">'+(i+1)+'</span>' +
+      '<div class="setup-q-inputs">' +
+        '<input type="text" value="'+escHtml(q.text)+'" placeholder="質問内容を入力してください" oninput="setupQs['+i+'].text=this.value">' +
+        '<div class="setup-q-badges">' +
+          Object.entries(typeInfo).map(([t,{label,cls}]) =>
+            '<button type="button" class="type-badge '+(q.ansType===t?cls:'')+'" onclick="setAnsType('+i+',\''+t+'\')">'+label+'</button>'
+          ).join('') +
+          '<button type="button" class="req-toggle '+(q.required?'required':'optional')+'" onclick="toggleReq('+i+')">'+(q.required?'必須':'任意')+'</button>' +
+        '</div>' +
+      '</div>' +
+      (setupQs.length > 1 ? '<button type="button" class="del-q-btn" onclick="deleteQ('+i+')">削除</button>' : '');
+    list.appendChild(row);
+  });
+}
+
+function setAnsType(i, t) { setupQs[i].ansType = t; renderSetupList(); }
+function toggleReq(i) { setupQs[i].required = !setupQs[i].required; renderSetupList(); }
+function deleteQ(i) { setupQs.splice(i,1); renderSetupList(); }
+function setupAddQ() {
+  setupQs.push({ text:'', required:false, ansType:'text' });
+  renderSetupList();
+  const ins = document.querySelectorAll('#setup-q-list input[type="text"]');
+  if (ins.length) ins[ins.length-1].focus();
+}
+
+function setupApply() {
+  document.querySelectorAll('#setup-q-list input[type="text"]').forEach((el,i) => {
+    if (setupQs[i]) setupQs[i].text = el.value.trim();
+  });
+  const gasUrl     = document.getElementById('setup-gas-url').value.trim();
+  const clientName = document.getElementById('setup-client-name').value.trim();
+  const subject    = document.getElementById('setup-subject').value.trim();
+  const valid      = setupQs.filter(q => q.text.trim());
+
+  if (!valid.length) { alert('質問を1件以上入力してください。'); return; }
+
+  const payload = JSON.stringify({
+    g: gasUrl, c: clientName, s: subject,
+    q: valid.map(q => ({ t:q.text, r:q.required?1:0, a:q.ansType }))
+  });
+  const base = window.location.href.split('?')[0].split('#')[0];
+  const url  = base + '?d=' + encodeURIComponent(payload);
+  document.getElementById('generated-url').value = url;
+  document.getElementById('setup-url-panel').style.display = 'block';
+  document.getElementById('copy-success-url').style.display = 'none';
+}
+
+function copyUrl() {
+  const val = document.getElementById('generated-url').value;
+  navigator.clipboard.writeText(val).then(showUrlOk).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = val; ta.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showUrlOk();
+  });
+}
+function showUrlOk() {
+  const el = document.getElementById('copy-success-url');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ========== フォーム構築 ==========
+let fd = { gasUrl:'', clientName:'', subject:'', questions:[] };
+// fileStores[i] = [{ file: File, docType: string }, ...]
+let fileStores = {};
+
+function initFromUrl() {
+  const d = new URLSearchParams(window.location.search).get('d');
+  if (!d) return;
+  try {
+    const p = JSON.parse(decodeURIComponent(d));
+    fd.gasUrl     = p.g || '';
+    fd.clientName = p.c || '';
+    fd.subject    = p.s || '';
+    fd.questions  = (p.q||[]).map(q => ({ text:q.t||'', required:q.r===1, ansType:q.a||'text' }));
+    if (!fd.questions.length) return;
+
+    document.getElementById('form-main-title').textContent =
+      fd.clientName ? fd.clientName+' 様　追完事項 質問フォーム' : '追完事項　質問フォーム';
+
+    if (fd.subject) {
+      document.getElementById('form-section-title').textContent = fd.subject;
+      document.getElementById('form-section-note').innerHTML =
+        '「<strong>'+escHtml(fd.subject)+'</strong>」について各質問にご回答ください。'+
+        '<span style="color:var(--red);font-weight:500;">必須</span>は必ずご回答・添付ください。';
+    }
+    buildQAList();
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('main-form-area').classList.add('active');
+  } catch(e) { console.warn(e); }
+}
+
+function buildQAList() {
+  const list = document.getElementById('qa-list');
+  list.innerHTML = '';
+  fileStores = {};
+
+  fd.questions.forEach((q, i) => {
+    fileStores[i] = [];
+    const isText = q.ansType === 'text' || q.ansType === 'both';
+    const isFile = q.ansType === 'file' || q.ansType === 'both';
+    const isBoth = q.ansType === 'both';
+
+    const block = document.createElement('div');
+    block.className = 'q-block';
+    block.id = 'qblock-'+i;
+
+    let inner =
+      '<div class="q-block-header">' +
+        '<span class="q-num-badge">'+(i+1)+'</span>' +
+        '<span class="q-text">'+escHtml(q.text)+(q.required?' <span style="color:var(--red);font-size:12px;">※</span>':'')+'</span>' +
+        '<span class="q-req-badge '+(q.required?'required':'optional')+'">'+(q.required?'必須':'任意')+'</span>' +
+      '</div>';
+
+    if (isBoth) {
+      inner +=
+        '<div class="ans-type-tabs">' +
+          '<button type="button" class="ans-tab active" onclick="switchTab('+i+',\'text\',this)">テキストで回答</button>' +
+          '<button type="button" class="ans-tab" onclick="switchTab('+i+',\'file\',this)">ファイルを添付</button>' +
+        '</div>';
+    }
+
+    if (isText) {
+      inner +=
+        '<div class="ans-panel'+(isBoth?' active':'')+'" id="panel-text-'+i+'">' +
+          '<textarea id="ans-'+i+'" placeholder="こちらにご記入ください" rows="3"></textarea>' +
+        '</div>';
+    }
+
+    if (isFile) {
+      // 書類種別セレクト + ドロップエリア
+      const selectOptions = DOC_TYPES.map((t,ti) =>
+        '<option value="'+(ti===0?'':escHtml(t))+'">'+escHtml(t)+'</option>'
+      ).join('');
+
+      inner +=
+        '<div class="ans-panel'+(isBoth?'':' active')+'" id="panel-file-'+i+'">' +
+          '<div class="doc-type-row">' +
+            '<span class="doc-type-label">書類の種別：</span>' +
+            '<select class="doc-type-select" id="doctype-'+i+'" onchange="onDocTypeChange('+i+')">' +
+              selectOptions +
+            '</select>' +
+            '<input type="text" class="doc-type-other-input" id="doctype-other-'+i+'" placeholder="書類の種別を入力してください">' +
+          '</div>' +
+          '<div class="file-drop-area" id="drop-'+i+'">' +
+            '<input type="file" id="file-input-'+i+'" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx">' +
+            '<div class="file-drop-icon">📁</div>' +
+            '<div class="file-drop-label">ここにファイルをドロップ、または<strong>クリックして選択</strong></div>' +
+            '<div class="file-drop-hint">対応形式：画像（JPG・PNG・HEIC等）、PDF、Word、Excel　／　1ファイル最大20MB</div>' +
+          '</div>' +
+          '<div class="file-preview-list" id="preview-'+i+'"></div>' +
+        '</div>';
+    }
+
+    inner += '<div class="error-msg" id="err-'+i+'">この質問は必須です。ご回答またはファイルを添付してください。</div>';
+    block.innerHTML = inner;
+    list.appendChild(block);
+
+    // イベント登録
+    if (isFile) {
+      const fi = document.getElementById('file-input-'+i);
+      if (fi) fi.addEventListener('change', e => addFiles(i, e.target.files));
+      const da = document.getElementById('drop-'+i);
+      if (da) {
+        da.addEventListener('dragover', e => { e.preventDefault(); da.classList.add('dragover'); });
+        da.addEventListener('dragleave', () => da.classList.remove('dragover'));
+        da.addEventListener('drop', e => {
+          e.preventDefault(); da.classList.remove('dragover');
+          addFiles(i, e.dataTransfer.files);
+        });
+      }
+    }
+  });
+}
+
+function onDocTypeChange(i) {
+  const sel   = document.getElementById('doctype-'+i);
+  const other = document.getElementById('doctype-other-'+i);
+  const isOther = sel.value === 'その他（自由入力）';
+  other.classList.toggle('visible', isOther);
+  if (!isOther) other.value = '';
+}
+
+function getDocType(i) {
+  const sel = document.getElementById('doctype-'+i);
+  if (!sel) return '';
+  if (sel.value === 'その他（自由入力）') {
+    const ot = document.getElementById('doctype-other-'+i);
+    return ot ? (ot.value.trim() || 'その他') : 'その他';
+  }
+  return sel.value || '種別未選択';
+}
+
+function switchTab(i, type, btn) {
+  document.querySelectorAll('#qblock-'+i+' .ans-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const tp = document.getElementById('panel-text-'+i);
+  const fp = document.getElementById('panel-file-'+i);
+  if (tp) tp.classList.toggle('active', type==='text');
+  if (fp) fp.classList.toggle('active', type==='file');
+}
+
+function addFiles(qIdx, files) {
+  const docType = getDocType(qIdx);
+  Array.from(files).forEach(f => {
+    if (f.size > 20*1024*1024) { alert(f.name+' は20MBを超えているため追加できません。'); return; }
+    if (!fileStores[qIdx].some(x => x.file.name===f.name && x.file.size===f.size)) {
+      fileStores[qIdx].push({ file: f, docType: docType });
+    }
+  });
+  renderPreviews(qIdx);
+}
+
+function renderPreviews(qIdx) {
+  const c = document.getElementById('preview-'+qIdx);
+  if (!c) return;
+  c.innerHTML = '';
+  fileStores[qIdx].forEach((entry, fi) => {
+    const item = document.createElement('div');
+    item.className = 'file-preview-item';
+    item.innerHTML =
+      '<span class="file-type-icon">'+getFileIcon(entry.file.name)+'</span>' +
+      '<div class="file-info">' +
+        '<div class="file-name">'+escHtml(entry.file.name)+'</div>' +
+        '<div class="file-size">'+formatBytes(entry.file.size)+'</div>' +
+      '</div>' +
+      '<span class="file-doc-type-tag">'+escHtml(entry.docType || '種別未選択')+'</span>' +
+      '<button type="button" class="file-remove-btn" onclick="removeFile('+qIdx+','+fi+')">削除</button>';
+    c.appendChild(item);
+  });
+}
+
+function removeFile(qIdx, fi) {
+  fileStores[qIdx].splice(fi, 1);
+  renderPreviews(qIdx);
+}
+
+// ========== 送信 ==========
+async function submitForm() {
+  // バリデーション
+  let valid = true;
+  fd.questions.forEach((q, i) => {
+    if (!q.required) return;
+    const ansEl  = document.getElementById('ans-'+i);
+    const hasText = ansEl && ansEl.value.trim().length > 0;
+    const hasFile = (fileStores[i]||[]).length > 0;
+    let ok = false;
+    if (q.ansType==='text') ok = hasText;
+    if (q.ansType==='file') ok = hasFile;
+    if (q.ansType==='both') ok = hasText || hasFile;
+    const block = document.getElementById('qblock-'+i);
+    const err   = document.getElementById('err-'+i);
+    if (!ok) {
+      block.classList.add('has-error');
+      err.classList.add('visible');
+      if (ansEl) ansEl.classList.add('input-error');
+      valid = false;
+    } else {
+      block.classList.remove('has-error');
+      err.classList.remove('visible');
+      if (ansEl) ansEl.classList.remove('input-error');
+    }
+  });
+
+  if (!valid) {
+    document.getElementById('validation-alert').classList.add('visible');
+    document.querySelector('.q-block.has-error')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  document.getElementById('validation-alert').classList.remove('visible');
+  document.getElementById('submit-btn').disabled = true;
+  showState('sending');
+  document.getElementById('success-overlay').classList.add('active');
+
+  // 全ファイルを収集
+  const allFiles = [];
+  fd.questions.forEach((q, i) => {
+    (fileStores[i]||[]).forEach(entry => allFiles.push({ qIdx:i, entry }));
+  });
+  const total = allFiles.length;
+
+  try {
+    // ① テキスト回答を送信
+    setProgress(5, '回答内容を送信中...');
+    const answers = fd.questions.map((q, i) => ({
+      no:        i+1,
+      question:  q.text,
+      required:  q.required,
+      ansType:   q.ansType,
+      text:      (document.getElementById('ans-'+i)||{}).value || '',
+      fileNames: (fileStores[i]||[]).map(e => e.file.name),
+      docTypes:  (fileStores[i]||[]).map(e => e.docType)
+    }));
+    await postGas({
+      type:        'text',
+      clientName:  fd.clientName,
+      subject:     fd.subject,
+      answers:     JSON.stringify(answers),
+      submittedAt: new Date().toLocaleString('ja-JP')
+    });
+    setProgress(total > 0 ? 20 : 100, total > 0 ? 'ファイルを送信中...' : '完了');
+
+    // ② ファイルを1件ずつ送信
+    for (let idx = 0; idx < allFiles.length; idx++) {
+      const { qIdx, entry } = allFiles[idx];
+      const pct = 20 + Math.round(((idx+1)/total)*78);
+      setProgress(pct, '('+(idx+1)+'/'+total+') '+entry.file.name+' を送信中...');
+      const b64 = await toBase64(entry.file);
+      await postGas({
+        type:       'file',
+        clientName: fd.clientName,
+        subject:    fd.subject,
+        qNo:        qIdx+1,
+        qText:      fd.questions[qIdx].text,
+        docType:    entry.docType || '種別未選択',
+        fileName:   entry.file.name,
+        mimeType:   entry.file.type || 'application/octet-stream',
+        data:       b64
+      });
+    }
+
+    setProgress(100, '送信完了');
+    setTimeout(() => showState('done'), 600);
+
+  } catch(e) {
+    document.getElementById('error-detail').textContent = 'エラーが発生しました。時間をおいてもう一度お試しください。';
+    showState('error');
+    document.getElementById('submit-btn').disabled = false;
+  }
+}
+
+function postGas(obj) {
+  return fetch(fd.gasUrl, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: Object.entries(obj).map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&')
+  });
+}
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+function setProgress(pct, label) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+  if (label) document.getElementById('progress-label').textContent = label;
+}
+function showState(name) {
+  ['sending','done','error'].forEach(s => {
+    document.getElementById('state-'+s).style.display = s===name?'':'none';
+  });
+}
+function closeError() {
+  document.getElementById('success-overlay').classList.remove('active');
+}
+
+renderSetupList();
+initFromUrl();
+</script>
+</body>
+</html>
