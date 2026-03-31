@@ -729,7 +729,7 @@ function buildQAList() {
 
     if (isText) {
       inner +=
-        '<div class="ans-panel'+(isBoth?' active':'')+'" id="panel-text-'+i+'">' +
+        '<div class="ans-panel active" id="panel-text-'+i+'">' +
           '<textarea id="ans-'+i+'" placeholder="こちらにご記入ください" rows="3"></textarea>' +
         '</div>';
     }
@@ -741,7 +741,7 @@ function buildQAList() {
       ).join('');
 
       inner +=
-        '<div class="ans-panel'+(isBoth?'':' active')+'" id="panel-file-'+i+'">' +
+        '<div class="ans-panel'+(isFile && !isBoth?' active':isBoth?'':'')+'" id="panel-file-'+i+'">' +
           '<div class="doc-type-row">' +
             '<span class="doc-type-label">書類の種別：</span>' +
             '<select class="doc-type-select" id="doctype-'+i+'" onchange="onDocTypeChange('+i+')">' +
