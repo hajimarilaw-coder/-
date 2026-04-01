@@ -638,6 +638,7 @@ function setupApply() {
   const subject    = document.getElementById('setup-subject').value.trim();
   const valid      = setupQs.filter(q => q.text.trim());
 
+  if (!gasUrl) { alert('GASのURLが設定されていません。管理者にお問い合わせください。'); return; }
   if (!valid.length) { alert('質問を1件以上入力してください。'); return; }
 
   const payload = JSON.stringify({
@@ -741,7 +742,7 @@ function buildQAList() {
       ).join('');
 
       inner +=
-        '<div class="ans-panel'+(isFile && !isBoth?' active':isBoth?'':'')+'" id="panel-file-'+i+'">' +
+        '<div class="ans-panel'+(isFile && !isBoth ? ' active' : '')+'" id="panel-file-'+i+'">' +
           '<div class="doc-type-row">' +
             '<span class="doc-type-label">書類の種別：</span>' +
             '<select class="doc-type-select" id="doctype-'+i+'" onchange="onDocTypeChange('+i+')">' +
@@ -807,14 +808,87 @@ function switchTab(i, type, btn) {
   if (fp) fp.classList.toggle('active', type==='file');
 }
 
-function addFiles(qIdx, files) {
-  const docType = getDocType(qIdx);
-  Array.from(files).forEach(f => {
-    if (f.size > 20*1024*1024) { alert(f.name+' は20MBを超えているため追加できません。'); return; }
-    if (!fileStores[qIdx].some(x => x.file.name===f.name && x.file.size===f.size)) {
-      fileStores[qIdx].push({ file: f, docType: docType });
-    }
+// 画像をCanvasで圧縮する（JPEG・PNG・HEICなど画像ファイルのみ対象）
+function compressImage(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve) => {
+    // PDF・Word・Excelは圧縮しない
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isImage = ['jpg','jpeg','png','gif','webp','heic','heif','bmp'].includes(ext)
+                 || file.type.startsWith('image/');
+    if (!isImage) { resolve(file); return; }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // リサイズ比を計算
+        let w = img.width, h = img.height;
+        if (w > maxWidth || h > maxHeight) {
+          const ratio = Math.min(maxWidth / w, maxHeight / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width  = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= file.size) {
+            // 圧縮後の方が大きければ元ファイルをそのまま使う
+            resolve(file);
+          } else {
+            // ファイル名は元のまま維持（拡張子のみjpgに変更）
+            const baseName = file.name.replace(/\.[^.]+$/, '');
+            const newName  = baseName + '.jpg';
+            resolve(new File([blob], newName, { type: 'image/jpeg' }));
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => resolve(file); // 読み込み失敗時は元ファイル
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
   });
+}
+
+async function addFiles(qIdx, files) {
+  const docType = getDocType(qIdx);
+  // プレビューに「処理中」表示
+  const previewEl = document.getElementById('preview-'+qIdx);
+  if (previewEl) {
+    const msg = document.createElement('div');
+    msg.id = 'compress-msg-'+qIdx;
+    msg.style.cssText = 'font-size:12px;color:var(--text-muted);padding:8px 0;';
+    msg.textContent = '画像を最適化中...';
+    previewEl.appendChild(msg);
+  }
+
+  for (const f of Array.from(files)) {
+    if (f.size > 20*1024*1024) { alert(f.name+' は20MBを超えているため追加できません。'); continue; }
+    if (fileStores[qIdx].some(x => x.origName===f.name)) continue;
+
+    // 画像は最大1920×1920・品質0.82で圧縮
+    const compressed = await compressImage(f, 1920, 1920, 0.82);
+
+    // 書類種別が設定されている場合、日本語ファイル名に変換
+    // 例：書類種別「車検証」→ 「車検証_1.jpg」「車検証_2.jpg」
+    const currentCount = fileStores[qIdx].length + 1;
+    const ext          = compressed.name.split('.').pop() || 'jpg';
+    const jaName       = docType && docType !== '種別未選択'
+      ? docType + '_' + currentCount + '.' + ext
+      : compressed.name;
+    const renamedFile  = jaName !== compressed.name
+      ? new File([compressed], jaName, { type: compressed.type })
+      : compressed;
+
+    fileStores[qIdx].push({ file: renamedFile, docType: docType, origName: f.name });
+  }
+
+  // 「処理中」表示を削除してプレビューを更新
+  const msg = document.getElementById('compress-msg-'+qIdx);
+  if (msg) msg.remove();
   renderPreviews(qIdx);
 }
 
@@ -825,11 +899,15 @@ function renderPreviews(qIdx) {
   fileStores[qIdx].forEach((entry, fi) => {
     const item = document.createElement('div');
     item.className = 'file-preview-item';
+    // 圧縮済み画像はファイル名に.jpgが付いているので判別
+    const isCompressed = entry.file.type === 'image/jpeg' && entry.file.name.endsWith('.jpg');
     item.innerHTML =
       '<span class="file-type-icon">'+getFileIcon(entry.file.name)+'</span>' +
       '<div class="file-info">' +
         '<div class="file-name">'+escHtml(entry.file.name)+'</div>' +
-        '<div class="file-size">'+formatBytes(entry.file.size)+'</div>' +
+        '<div class="file-size">'+formatBytes(entry.file.size)+
+          (isCompressed ? ' <span style="color:var(--green);font-size:11px;">✓ 最適化済み</span>' : '') +
+        '</div>' +
       '</div>' +
       '<span class="file-doc-type-tag">'+escHtml(entry.docType || '種別未選択')+'</span>' +
       '<button type="button" class="file-remove-btn" onclick="removeFile('+qIdx+','+fi+')">削除</button>';
@@ -839,6 +917,17 @@ function renderPreviews(qIdx) {
 
 function removeFile(qIdx, fi) {
   fileStores[qIdx].splice(fi, 1);
+  // 削除後に連番を振り直す
+  fileStores[qIdx].forEach((entry, idx) => {
+    const docType = entry.docType;
+    if (docType && docType !== '種別未選択') {
+      const ext     = entry.file.name.split('.').pop() || 'jpg';
+      const newName = docType + '_' + (idx+1) + '.' + ext;
+      if (entry.file.name !== newName) {
+        entry.file = new File([entry.file], newName, { type: entry.file.type });
+      }
+    }
+  });
   renderPreviews(qIdx);
 }
 
@@ -909,7 +998,7 @@ async function submitForm() {
 
     // ② ファイルを1件ずつ・分割なしで送信（no-cors方式）
     // GASのURLエンコード制限を避けるためBase64をそのままPOST
-    const CHUNK_SIZE = 150 * 1024; // 150KB（Base64後約200KB）単位で分割
+    const CHUNK_SIZE = 90 * 1024; // 90KB（GASのCacheService上限99KBに収まるよう余裕を持たせる）
 
     for (let idx = 0; idx < allFiles.length; idx++) {
       const { qIdx, entry } = allFiles[idx];
@@ -936,8 +1025,8 @@ async function submitForm() {
           totalChunks:String(totalChunks),
           data:       chunk
         });
-        // GASの処理時間を確保するため少し待機
-        await sleep(300);
+        // GASの処理時間を確保するため待機
+        await sleep(500);
       }
 
       // 結合・保存を依頼
@@ -954,8 +1043,8 @@ async function submitForm() {
         fileName:    entry.file.name,
         mimeType:    entry.file.type || 'application/octet-stream'
       });
-      // GASの保存処理を待機
-      await sleep(1000);
+      // GASの保存処理を待機（チャンク数が多いほど長く待つ）
+      await sleep(Math.max(1500, totalChunks * 200));
     }
 
     setProgress(100, '送信完了');
